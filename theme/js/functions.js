@@ -5,7 +5,7 @@ if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
    jQuery('html').addClass('ismobile');
 }
 
-jQuery(window).load(function () {
+jQuery(window).on('load', function () {
     /* --------------------------------------------------------
      Page Loader
      -----------------------------------------------------------*/
@@ -96,71 +96,72 @@ jQuery(document).ready(function(){
      * Sidebar
      */
     (function(){
+        var $body = jQuery('body');
+        var $document = jQuery(document);
+        var $header = jQuery('#header');
+        var activePanel = null;
+        var activeTrigger = null;
+
+        function closeSidebarPanel() {
+            if (!activePanel || !activeTrigger) {
+                return;
+            }
+
+            jQuery(activePanel).removeClass('toggled');
+            $header.removeClass('sidebar-toggled');
+            jQuery(activeTrigger).removeClass('open');
+            activePanel = null;
+            activeTrigger = null;
+            $document.off('click.sbSidebar');
+        }
+
         //Toggle
-        jQuery('body').on('click', '#menu-trigger, #chat-trigger', function(e){
+        $body.on('click', '#menu-trigger, #chat-trigger', function(e){
             e.preventDefault();
-            var x = jQuery(this).data('trigger');
 
-            jQuery(x).toggleClass('toggled');
-            jQuery(this).toggleClass('open');
+            var triggerSelector = '#' + this.id;
+            var panelSelector = jQuery(this).data('trigger');
+            var isOpen = jQuery(panelSelector).hasClass('toggled');
 
-    	    //Close opened sub-menus
-    	    jQuery('.sub-menu.toggled').not('.active').each(function(){
-        		jQuery(this).removeClass('toggled');
-        		jQuery(this).find('ul').hide();
-    	    });
+            jQuery('.sub-menu.toggled').not('.active').removeClass('toggled').children('ul').hide();
+            jQuery('.profile-menu').removeClass('toggled').find('.main-menu').hide();
 
+            if (activePanel && activePanel !== panelSelector) {
+                jQuery(activePanel).removeClass('toggled');
+                if (activeTrigger) {
+                    jQuery(activeTrigger).removeClass('open');
+                }
+            }
 
-
-	    jQuery('.profile-menu .main-menu').hide();
-
-            if (x == '#sidebar') {
-
-                jQueryelem = '#sidebar';
-                jQueryelem2 = '#menu-trigger';
-
+            if (panelSelector === '#sidebar') {
+                jQuery('#chat').removeClass('toggled');
                 jQuery('#chat-trigger').removeClass('open');
-
-                if (!jQuery('#chat').hasClass('toggled')) {
-                    jQuery('#header').toggleClass('sidebar-toggled');
-                }
-                else {
-                    jQuery('#chat').removeClass('toggled');
-                }
-            }
-
-            if (x == '#chat') {
-                jQueryelem = '#chat';
-                jQueryelem2 = '#chat-trigger';
-
+            } else if (panelSelector === '#chat') {
+                jQuery('#sidebar').removeClass('toggled');
                 jQuery('#menu-trigger').removeClass('open');
-
-                if (!jQuery('#sidebar').hasClass('toggled')) {
-                    jQuery('#header').toggleClass('sidebar-toggled');
-                }
-                else {
-                    jQuery('#sidebar').removeClass('toggled');
-                }
             }
 
-            //When clicking outside
-            if (jQuery('#header').hasClass('sidebar-toggled')) {
-                jQuery(document).on('click', function (e) {
-                    if ((jQuery(e.target).closest(jQueryelem).length === 0) && (jQuery(e.target).closest(jQueryelem2).length === 0)) {
-                        setTimeout(function(){
-                            jQuery(jQueryelem).removeClass('toggled');
-                            jQuery('#header').removeClass('sidebar-toggled');
-                            jQuery(jQueryelem2).removeClass('open');
-                        });
+            jQuery(panelSelector).toggleClass('toggled', !isOpen);
+            jQuery(this).toggleClass('open', !isOpen);
+            $header.toggleClass('sidebar-toggled', !isOpen);
+
+            activePanel = !isOpen ? panelSelector : null;
+            activeTrigger = !isOpen ? triggerSelector : null;
+
+            $document.off('click.sbSidebar');
+            if (!isOpen) {
+                $document.on('click.sbSidebar', function(event) {
+                    if (jQuery(event.target).closest(panelSelector + ', ' + triggerSelector).length === 0) {
+                        closeSidebarPanel();
                     }
                 });
             }
-        })
+        });
 
         //Submenu
-        jQuery('body').on('click', '.sub-menu > a', function(e){
+        $body.on('click', '.sub-menu > a', function(e){
             e.preventDefault();
-            jQuery(this).next().slideToggle(200);
+            jQuery(this).next().stop(true, true).slideToggle(200);
             jQuery(this).parent().toggleClass('toggled');
         });
     })();
@@ -311,25 +312,31 @@ jQuery(document).ready(function(){
      * Weather Widget
      */
     if (jQuery('#weather-widget')[0]) {
+        var $weatherWidget = jQuery('#weather-widget');
+
         jQuery.simpleWeather({
             location: 'Austin, TX',
             woeid: '',
             unit: 'f',
             success: function(weather) {
-                html = '<div class="weather-status">'+weather.temp+'&deg;'+weather.units.temp+'</div>';
-                html += '<ul class="weather-info"><li>'+weather.city+', '+weather.region+'</li>';
-                html += '<li class="currently">'+weather.currently+'</li></ul>';
-                html += '<div class="weather-icon wi-'+weather.code+'"></div>';
-                html += '<div class="dash-widget-footer"><div class="weather-list tomorrow">';
-                html += '<span class="weather-list-icon wi-'+weather.forecast[2].code+'"></span><span>'+weather.forecast[1].high+'/'+weather.forecast[1].low+'</span><span>'+weather.forecast[1].text+'</span>';
-                html += '</div>';
-                html += '<div class="weather-list after-tomorrow">';
-                html += '<span class="weather-list-icon wi-'+weather.forecast[2].code+'"></span><span>'+weather.forecast[2].high+'/'+weather.forecast[2].low+'</span><span>'+weather.forecast[2].text+'</span>';
-                html += '</div></div>';
-                jQuery("#weather-widget").html(html);
+                var tomorrow = weather.forecast[1] || {};
+                var afterTomorrow = weather.forecast[2] || tomorrow;
+                var html = [
+                    '<div class="weather-status">', weather.temp, '&deg;', weather.units.temp, '</div>',
+                    '<ul class="weather-info"><li>', weather.city, ', ', weather.region, '</li>',
+                    '<li class="currently">', weather.currently, '</li></ul>',
+                    '<div class="weather-icon wi-', weather.code, '"></div>',
+                    '<div class="dash-widget-footer"><div class="weather-list tomorrow">',
+                    '<span class="weather-list-icon wi-', tomorrow.code, '"></span><span>', tomorrow.high, '/', tomorrow.low, '</span><span>', tomorrow.text, '</span>',
+                    '</div><div class="weather-list after-tomorrow">',
+                    '<span class="weather-list-icon wi-', afterTomorrow.code, '"></span><span>', afterTomorrow.high, '/', afterTomorrow.low, '</span><span>', afterTomorrow.text, '</span>',
+                    '</div></div>'
+                ].join('');
+
+                $weatherWidget.html(html);
             },
             error: function(error) {
-                jQuery("#weather-widget").html('<p>'+error+'</p>');
+                $weatherWidget.text(error);
             }
         });
     }

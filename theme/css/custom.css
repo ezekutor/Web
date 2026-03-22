@@ -2,3 +2,37 @@
  * This file should contain all your custom styles.
  * This don't should be overwritten!
  */
+
+#sidebar,
+#chat,
+.c-overflow {
+  contain: layout paint;
+}
+
+.table-responsive,
+.listview,
+#notifications {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 600px;
+}
+
+.page-loader,
+.profile-menu .main-menu,
+.sub-menu ul {
+  will-change: opacity, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated,
+  .page-loader,
+  .dropdown-menu,
+  .profile-menu .main-menu,
+  .sub-menu ul {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

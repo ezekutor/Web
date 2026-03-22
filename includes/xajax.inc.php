@@ -1274,7 +1274,10 @@ class xajax
 					}
 					else
 					{
-						$sValue = utf8_decode($sValue);
+						if (function_exists('mb_convert_encoding'))
+							$sValue = mb_convert_encoding($sValue, 'ISO-8859-1', 'UTF-8');
+						else if (function_exists('iconv'))
+							$sValue = iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $sValue);
 					}
 				}
 			}

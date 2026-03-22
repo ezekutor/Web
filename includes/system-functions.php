@@ -1131,10 +1131,7 @@ function GetFriendIDFromCommunityID($comid)
 	$raw = @file_get_contents("http://steamcommunity.com/id/".$comid."/?xml=1");
 	preg_match("/<privacyState>([^\]]*)<\/privacyState>/", $raw, $status);
 	if(($status && $status[1] != "public") || strstr($raw, "</profile>")) {
-		$raw = str_replace("&", "", $raw);
-		$raw = strip_31_ascii($raw);
-		$raw = utf8_encode($raw);
-		$xml = simplexml_load_string($raw);
+		$xml = simplexml_load_string(sb_normalize_steam_xml($raw));
 		$result = $xml->xpath('/profile/steamID64');
 		$friendid = (string)$result[0];
 		return $friendid;
@@ -1147,10 +1144,7 @@ function GetCommunityName($steamid)
 	$result = get_headers("http://steamcommunity.com/profiles/".$friendid."/", 1);
 	$raw = file_get_contents(($result["Location"]!=""?$result["Location"]:"http://steamcommunity.com/profiles/".$friendid."/")."?xml=1");
 	if(strstr($raw, "</profile>")) {
-		$raw = str_replace("&", "", $raw);
-        $raw = strip_31_ascii($raw);
-		$raw = utf8_encode($raw);
-		$xml = simplexml_load_string($raw);
+		$xml = simplexml_load_string(sb_normalize_steam_xml($raw));
 		$result = $xml->xpath('/profile/steamID');
 		$friendid = (string)$result[0];
 		return $friendid;
@@ -1209,6 +1203,48 @@ function strip_31_ascii($string)
 	for($i=0;$i<32;$i++)
 		$string = str_replace(chr($i), "", $string);
 	return $string;
+}
+
+function sb_utf8_encode_compat($value)
+{
+	if ($value === null || $value === '')
+		return (string)$value;
+
+	if (function_exists('mb_convert_encoding'))
+		return mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+
+	if (function_exists('iconv')) {
+		$converted = iconv('ISO-8859-1', 'UTF-8//IGNORE', $value);
+		if ($converted !== false)
+			return $converted;
+	}
+
+	return $value;
+}
+
+function sb_utf8_decode_compat($value)
+{
+	if ($value === null || $value === '')
+		return (string)$value;
+
+	if (function_exists('mb_convert_encoding'))
+		return mb_convert_encoding($value, 'ISO-8859-1', 'UTF-8');
+
+	if (function_exists('iconv')) {
+		$converted = iconv('UTF-8', 'ISO-8859-1//TRANSLIT//IGNORE', $value);
+		if ($converted !== false)
+			return $converted;
+	}
+
+	return $value;
+}
+
+function sb_normalize_steam_xml($raw)
+{
+	$raw = str_replace('&', '', $raw);
+	$raw = strip_31_ascii($raw);
+
+	return sb_utf8_encode_compat($raw);
 }
 
 function GetCommunityIDFromSteamID2($sid) {
