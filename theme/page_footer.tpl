@@ -76,6 +76,7 @@
 		  $.noConflict();
 		</script>
         
+        {literal}
         <script>
           (function scheduleCsrfRefresh() {
             window.setTimeout(function() {
@@ -86,6 +87,7 @@
             }, 15000);
           })();
         </script>
+        {/literal}
 
         <!-- Cron -->
         <script type="text/javascript" src="theme/js/cron.js"></script>
