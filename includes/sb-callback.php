@@ -32,6 +32,7 @@ include_once('user-functions.php');
 $xajax = new xajax();
 //$xajax->debugOn();
 $xajax->setRequestURI(XAJAX_REQUEST_URI);
+$xajax->cleanBufferOn();
 global $userbank;
 
 $methods = array(
