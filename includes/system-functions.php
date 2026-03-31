@@ -1729,7 +1729,9 @@ function getRequestType() {
 // Own implementation for filter_input()
 // INPUT_SESSION not yet implemented.
 function filterInput($type, $name, $filter = FILTER_DEFAULT, $options = []) {
-  if ($type != INPUT_SESSION)
+  $inputSession = defined('INPUT_SESSION') ? INPUT_SESSION : -1;
+
+  if ($type != $inputSession)
     return filter_input($type, $name, $filter, $options);
 
   if (!isset($_SESSION[$name]))
