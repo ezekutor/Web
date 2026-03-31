@@ -26,9 +26,9 @@
 // *************************************************************************
 
 // Check PHP environment.
-if (version_compare(PHP_VERSION, '5.5') == -1) {
+if (version_compare(PHP_VERSION, '8.3', '<')) {
   Header('Content-Type: text/plain; charset=UTF8');
-  echo("Работа SourceBans невозможна: для работы требуется PHP версии 5.5 и выше.\n");
+  echo("Работа SourceBans невозможна: для работы требуется PHP версии 8.3 и выше.\n");
   echo('На данный момент установлена версия ' . PHP_VERSION);
   exit();
 }

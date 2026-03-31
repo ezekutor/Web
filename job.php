@@ -6,7 +6,8 @@ Header('Content-Type: application/json; charset=UTF8');
 ignore_user_abort(true);
 set_time_limit(0);
 
-$CronToken = filterInput(INPUT_GET, 'token', FILTER_SANITIZE_STRING);
+$CronToken = filterInput(INPUT_GET, 'token', FILTER_UNSAFE_RAW);
+$CronToken = is_string($CronToken) ? preg_replace('/[^a-zA-Z0-9]/', '', $CronToken) : '';
 if ($CronToken != $_SESSION['CronToken']) {
   echo(json_encode([
     'result'  => false,

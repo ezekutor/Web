@@ -32,7 +32,7 @@ define('IN_HOME', true);
 //$GLOBALS['TitleRewrite'] = "HOME";
 
 $res = $GLOBALS['db']->Execute("SELECT count(name) FROM ".DB_PREFIX."_banlog");
-$totalstopped = (int)$res->fields[0];
+$totalstopped = (is_object($res) && isset($res->fields[0])) ? (int)$res->fields[0] : 0;
 
 $res = $GLOBALS['db']->Execute("SELECT bl.name, time, bl.sid, bl.bid, b.type, b.authid, b.ip
 								FROM ".DB_PREFIX."_banlog AS bl
@@ -42,7 +42,7 @@ $res = $GLOBALS['db']->Execute("SELECT bl.name, time, bl.sid, bl.bid, b.type, b.
 $GLOBALS['server_qry'] = "";
 $stopped = array();
 $blcount = 0;
-while (!$res->EOF)
+while (is_object($res) && !$res->EOF)
 {
 	$info = array();
 	//$info['date'] = SBDate($dateformat,$res->fields[1]);
@@ -70,16 +70,16 @@ while (!$res->EOF)
 }
 
 $res = $GLOBALS['db']->Execute("SELECT count(bid) FROM ".DB_PREFIX."_bans");
-$BanCount = (int)$res->fields[0];
+$BanCount = (is_object($res) && isset($res->fields[0])) ? (int)$res->fields[0] : 0;
 
 $res = $GLOBALS['db']->Execute("SELECT bid, ba.ip, ba.authid, ba.name, created, ends, length, reason, ba.aid, ba.sid, ad.user, CONCAT(se.ip,':',se.port), se.sid, mo.icon, ba.RemoveType, ba.type
-			    				FROM ".DB_PREFIX."_bans AS ba 
-			    				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
-			    				LEFT JOIN ".DB_PREFIX."_servers AS se ON se.sid = ba.sid
-			    				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
-			    				ORDER BY created DESC LIMIT 10");
+				    				FROM ".DB_PREFIX."_bans AS ba 
+				    				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
+				    				LEFT JOIN ".DB_PREFIX."_servers AS se ON se.sid = ba.sid
+				    				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
+				    				ORDER BY created DESC LIMIT 10");
 $bans = array();
-while (!$res->EOF)
+while (is_object($res) && !$res->EOF)
 {
         $info = array();
 	if ($res->fields['length'] == 0)
@@ -131,16 +131,16 @@ while (!$res->EOF)
 }
 
 $res = $GLOBALS['db']->Execute("SELECT count(bid) FROM ".DB_PREFIX."_comms");
-$CommCount = (int)$res->fields[0];
+$CommCount = (is_object($res) && isset($res->fields[0])) ? (int)$res->fields[0] : 0;
 	
 $res = $GLOBALS['db']->Execute("SELECT bid, ba.authid, ba.type, ba.name, created, ends, length, reason, ba.aid, ba.sid, ad.user, CONCAT(se.ip,':',se.port), se.sid, mo.icon, ba.RemoveType, ba.type
-				    				FROM ".DB_PREFIX."_comms AS ba 
-				    				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
-				    				LEFT JOIN ".DB_PREFIX."_servers AS se ON se.sid = ba.sid
-				    				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
-				    				ORDER BY created DESC LIMIT 10");
+					    				FROM ".DB_PREFIX."_comms AS ba 
+					    				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
+					    				LEFT JOIN ".DB_PREFIX."_servers AS se ON se.sid = ba.sid
+					    				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
+					    				ORDER BY created DESC LIMIT 10");
 $comms = array();
-while (!$res->EOF)
+while (is_object($res) && !$res->EOF)
 {
         $info = array();
 	if ($res->fields['length'] == 0)
@@ -196,9 +196,9 @@ $counts = $GLOBALS['db']->GetRow("SELECT
          (SELECT COUNT(aid) FROM `" . DB_PREFIX . "_admins` WHERE aid > 0) AS admins,
          (SELECT COUNT(sid) FROM `" . DB_PREFIX . "_servers`) AS servers"); // +
 
-		 
-$theme->assign('total_admins', $counts['admins']); // +
-$theme->assign('total_servers', $counts['servers']); // +
+			 
+$theme->assign('total_admins', isset($counts['admins']) ? $counts['admins'] : 0); // +
+$theme->assign('total_servers', isset($counts['servers']) ? $counts['servers'] : 0); // +
 $theme->assign('listing_block',  $GLOBALS['config']['config.home.comms']);
 
 require(TEMPLATES_PATH . "/page.servers.php"); //Set theme vars from servers page

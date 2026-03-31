@@ -32,6 +32,7 @@ include_once('user-functions.php');
 $xajax = new xajax();
 //$xajax->debugOn();
 $xajax->setRequestURI(XAJAX_REQUEST_URI);
+$xajax->cleanBufferOn();
 global $userbank;
 
 $methods = array(
@@ -3426,7 +3427,7 @@ function BanMemberOfGroup($grpurl, $queue, $reason, $last)
         $GLOBALS['db']->Execute($pre,array(0,
                            "",
                            $steamid,
-                           utf8_decode($tag->childNodes->item(0)->nodeValue),
+                           sb_utf8_decode_compat($tag->childNodes->item(0)->nodeValue),
                            0,
                            "Steam Community Group Ban (".$grpurl.") ".$reason,
                            $userbank->GetAid(),
@@ -3467,20 +3468,14 @@ function GetGroups($friendid)
   $raw = file_get_contents((!empty($result["Location"])?$result["Location"]:"http://steamcommunity.com/profiles/".$friendid."/")."?xml=1");
   preg_match("/<privacyState>([^\]]*)<\/privacyState>/", $raw, $status);
   if(($status && $status[1] != "public") || strstr($raw, "<groups>")) {
-    $raw = str_replace("&", "", $raw);
-    $raw = strip_31_ascii($raw);
-    $raw = utf8_encode($raw);
-    $xml = simplexml_load_string($raw); // parse xml
+    $xml = simplexml_load_string(sb_normalize_steam_xml($raw)); // parse xml
     $result = $xml->xpath('/profile/groups/group'); // go to the group nodes
     $i = 0;
-    while(list( , $node) = each($result)) {
+    foreach($result as $node) {
       // Steam only provides the details of the first 3 groups of a players profile. We need to fetch the individual groups seperately to get the correct information.
       if(empty($node->groupName)) {
         $memberlistxml = file_get_contents("http://steamcommunity.com/gid/".$node->groupID64."/memberslistxml/?xml=1");
-        $memberlistxml = str_replace("&", "", $memberlistxml);
-        $memberlistxml = strip_31_ascii($memberlistxml);
-        $memberlistxml = utf8_encode($memberlistxml);
-        $groupxml = simplexml_load_string($memberlistxml); // parse xml
+        $groupxml = simplexml_load_string(sb_normalize_steam_xml($memberlistxml)); // parse xml
         $node = $groupxml->xpath('/memberList/groupDetails');
         $node = $node[0];
       }
@@ -3502,7 +3497,7 @@ function GetGroups($friendid)
                               var a = document.createElement("a");
                                 a.href = "http://steamcommunity.com/groups/'.$node->groupURL.'";
                                 a.setAttribute("target","_blank");
-                                  var txt = document.createTextNode("'.utf8_decode($node->groupName).'");
+                                  var txt = document.createTextNode("'.sb_utf8_decode_compat($node->groupName).'");
                                 a.appendChild(txt);
                               td.appendChild(a);
                                 var txt = document.createTextNode(" (");
@@ -3602,7 +3597,7 @@ function BanFriends($friendid, $name)
       $GLOBALS['db']->Execute($pre,array(0,
                          "",
                          $steamid,
-                         utf8_decode($friendName),
+                         sb_utf8_decode_compat($friendName),
                          0,
                          "Steam Community Friend Ban (".htmlspecialchars($name).")",
                          $userbank->GetAid(),

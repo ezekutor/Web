@@ -76,15 +76,21 @@
 		  $.noConflict();
 		</script>
         
-        <script>setInterval(xajax_CSRF, 15000);</script>
+        {literal}
+        <script>
+          (function scheduleCsrfRefresh() {
+            window.setTimeout(function() {
+              if (!document.hidden && typeof xajax_CSRF === 'function') {
+                xajax_CSRF();
+              }
+              scheduleCsrfRefresh();
+            }, 15000);
+          })();
+        </script>
+        {/literal}
 
         <!-- Cron -->
-        <script type="text/javascript" src="theme/js/cron.js"></script>
+        <script type="text/javascript" src="theme/js/cron.js?v={$THEME_VERSION}-{$UPDATE_NUM}"></script>
         <script type="text/javascript">RunCron("{$cron_token}");</script>
-        
-        {if $custom_css > 0}
-            <link rel="stylesheet" href="theme/css/custom.css">
-        {/if}
-        <!-- Custom CSS -->
 	{*/body*}
 {*/html*}
