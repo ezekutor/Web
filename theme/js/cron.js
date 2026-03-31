@@ -39,9 +39,8 @@ function RunCron(Token) {
     method: 'GET',
     timeout: 15000
   }).done(function(response) {
-    sbCronState.failCount = 0;
-
     if (!response || response.result === false) {
+      sbCronState.failCount += 1;
       console.error('Failed when CRON run: ' + (response && response.reason ? response.reason : 'Unknown error'));
 
       // Token mismatch means we should stop current chain and wait for a fresh page render token.
@@ -50,9 +49,17 @@ function RunCron(Token) {
         return;
       }
 
-      scheduleCronRun(sbCronState.retryDelay);
+      if (sbCronState.failCount >= sbCronState.maxFailCount) {
+        sbCronState.activeToken = null;
+        return;
+      }
+
+      var failureDelay = Math.min(sbCronState.retryDelay * Math.pow(2, sbCronState.failCount - 1), 60000);
+      scheduleCronRun(failureDelay);
       return;
     }
+
+    sbCronState.failCount = 0;
 
     if (response.more === true && response.token) {
       sbCronState.activeToken = response.token;

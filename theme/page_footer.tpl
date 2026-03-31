@@ -90,7 +90,7 @@
         {/literal}
 
         <!-- Cron -->
-        <script type="text/javascript" src="theme/js/cron.js"></script>
+        <script type="text/javascript" src="theme/js/cron.js?v={$THEME_VERSION}-{$UPDATE_NUM}"></script>
         <script type="text/javascript">RunCron("{$cron_token}");</script>
 	{*/body*}
 {*/html*}
